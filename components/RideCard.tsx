@@ -1,10 +1,31 @@
-import { Image, Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 import { icons } from "@/constants";
+import { t } from "@/lib/i18n";
 import { formatDate, formatTime } from "@/lib/utils";
 import { Ride } from "@/types/type";
 
-const RideCard = ({ ride }: { ride: Ride }) => {
+const CANCELLABLE_STATUSES = [
+  "REQUESTED",
+  "SEARCHING_DRIVER",
+  "DRIVER_ASSIGNED",
+  "DRIVER_ARRIVING",
+  "DRIVER_AT_PICKUP",
+] as const;
+
+const RideCard = ({
+  ride,
+  onCancel,
+  cancelling,
+}: {
+  ride: Ride;
+  onCancel?: (rideId: number) => void;
+  cancelling?: boolean;
+}) => {
+  const canCancel =
+    CANCELLABLE_STATUSES.includes(ride.status as any) &&
+    ride.payment_status === "pending";
+
   return (
     <View className="flex flex-row items-center justify-center bg-white rounded-lg shadow-sm shadow-neutral-300 mb-3">
       <View className="flex flex-col items-start justify-center p-3">
@@ -61,7 +82,7 @@ const RideCard = ({ ride }: { ride: Ride }) => {
             </Text>
           </View>
 
-          <View className="flex flex-row items-center w-full justify-between">
+          <View className="flex flex-row items-center w-full justify-between mb-5">
             <Text className="text-md font-JakartaMedium text-gray-500">
               Payment Status
             </Text>
@@ -71,7 +92,30 @@ const RideCard = ({ ride }: { ride: Ride }) => {
               {ride.payment_status}
             </Text>
           </View>
+
+          <View className="flex flex-row items-center w-full justify-between">
+            <Text className="text-md font-JakartaMedium text-gray-500">
+              Ride Status
+            </Text>
+            <Text className="text-md font-JakartaBold">
+              {ride.status
+                ? t(`rides.status.${ride.status}`, undefined, {})
+                : "-"}
+            </Text>
+          </View>
         </View>
+
+        {canCancel && onCancel && (
+          <TouchableOpacity
+            onPress={() => onCancel(ride.ride_id)}
+            disabled={cancelling}
+            className="mt-3 w-full py-2 rounded-lg bg-red-500 items-center justify-center"
+          >
+            <Text className="text-white font-JakartaBold text-md">
+              {cancelling ? t("rides.cancelling") : t("rides.cancel")}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

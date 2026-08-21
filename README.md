@@ -43,13 +43,65 @@ like these step-by-step in a beginner-friendly manner!
 
 ## <a name="introduction">🤖 Introduction</a>
 
-Built with React Native for handling the user interface, Google Maps for rendering maps with directions, stripe for
-handling payments, serverless Postgres for managing databases, and styled with TailwindCSS, Uber Clone is a perfect
+Built with React Native for handling the user interface, Google Maps for rendering maps with directions, serverless
+Postgres for managing databases, and styled with TailwindCSS, Uber Clone is a perfect
 mobile app. The primary goal is to demonstrate how to develop full-stack mobile applications to showcase the developer's
 skills in a unique manner that creates a lasting impact.
 
 If you're getting started and need assistance or face any bugs, join our active Discord community with over **34k+**
 members. It's a place where people help each other out.
+
+## <a name="production-status">🔒 Production Status</a>
+
+This repository is being converted from the tutorial demo into a production taxi
+booking application for **Mauritania** (Nouakchott first). The conversion is done
+in phases; Phase 0 (stabilisation) and Phase 1 (core architecture) are
+implemented in this codebase:
+
+- **Authenticated APIs** — every route now verifies the Clerk session token
+  (`Authorization: Bearer <session JWT>`) server-side via `@clerk/backend`
+  (`lib/api-auth.ts`). The user row is synced lazily from the verified session,
+  so no client-side user-creation endpoint exists anymore.
+- **Server-controlled rides** — `POST /(api)/ride/create` derives the user from
+  the session, validates all inputs (zod), verifies the driver exists, computes
+  the fare **server-side in MRU**, and never accepts a client-supplied
+  `payment_status`, `fare_price`, `user_id` or `driver_id`.
+- **Cash-first booking** — Stripe was removed from the flow (Stripe does not
+  operate in Mauritania). Bookings are created with `payment_status = 'pending'`
+  and `payment_method = 'cash'`; the customer pays the driver in cash at the end
+  of the trip. A pluggable payment architecture arrives in a later phase.
+- **Fare engine (Mauritania pricing)** — server-side distance-based fare:
+  **100 MRU for the first km, +100 MRU per additional started km**, configured
+  in the `fare_rules` table (seeded by `002_fare_and_state.sql`, admin-editable
+  later). `lib/fare.ts` computes the authoritative price at booking;
+  `lib/utils.ts` mirrors it for the client preview.
+- **Ride state machine** — `lib/ride-state.ts` defines the legal transitions
+  and `transitionRide()` performs guarded, atomic status updates (concurrent
+  double-advances are impossible). `POST /(api)/ride/[id]/cancel` lets the
+  customer cancel a `REQUESTED` ride; every status change is audited in
+  `ride_status_history` by a DB trigger.
+- **API hardening** — all routes share `lib/api-handler.ts`: CORS headers,
+  OPTIONS preflight, per-IP rate limiting (`lib/rate-limit.ts`; ride creation
+  limited to 10/min) and uniform error mapping.
+- **+222 phone capture** — sign-up collects a Mauritanian phone number,
+  validated with `libphonenumber-js` (`lib/phone.ts`) and stored on the Clerk
+  user (verified phone via SMS arrives with the driver app phase).
+- **i18n scaffold** — `lib/i18n.ts` provides English / French / Arabic with
+  device-language detection, RTL flipping for Arabic, and the Cairo Arabic font
+  swapped in automatically. Auth + booking flows are translated; the remaining
+  screens follow in a later phase.
+- **Route guards** — `(root)` redirects signed-out users to welcome; `(auth)`
+  redirects signed-in users to home.
+- **MRU money handling** — all monetary values are integer MRU (ouguiya).
+- **Reliable API client** — `lib/fetch.ts` throws on non-2xx responses (with the
+  server's error message), prefixes the `EXPO_PUBLIC_SERVER_URL` base for
+  production builds, and attaches the session token automatically.
+- **Versioned schema** — `db/migrations/` + `scripts/migrate.mjs`; see above.
+
+**Not yet done (later phases):** driver app, driver matching/dispatch, realtime
+tracking, SMS phone verification, admin dashboard (including fare rule edits),
+ratings, notifications, payments service, monitoring/CI/CD, and production
+deployment configuration. Do not treat this as launch-ready.
 
 <a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
 
@@ -57,8 +109,7 @@ members. It's a place where people help each other out.
 
 - React Native
 - Expo
-- Stripe
-- PostgreSQL
+- PostgreSQL (NeonDB)
 - Google Maps
 - zustand
 - Clerk
@@ -86,9 +137,9 @@ members. It's a place where people help each other out.
 
 👉 **Confirm Ride with Detailed Information**: View complete ride details, including time and fare price.
 
-👉 **Pay for Ride Using Stripe**: Make payments using multiple methods like cards and others.
+👉 **Cash-First Booking**: Confirm a ride and pay the driver in cash (MRU) at the end of the trip.
 
-👉 **Create Rides After Successful Payment**: Book a ride after confirming payment.
+👉 **Create Rides After Confirmation**: Book a ride once the details are confirmed.
 
 👉 **Profile**: Manage account details in the profile screen.
 
@@ -132,23 +183,37 @@ Create a new file named `.env` in the root of your project and add the following
 ```env
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=
 
+CLERK_SECRET_KEY=
+
 EXPO_PUBLIC_PLACES_API_KEY=
 EXPO_PUBLIC_DIRECTIONS_API_KEY=
 
-DATABASE_URL=
-
-EXPO_PUBLIC_SERVER_URL=https://uber.dev/
-
 EXPO_PUBLIC_GEOAPIFY_API_KEY=
 
-EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-STRIPE_SECRET_KEY=
+DATABASE_URL=
+
+EXPO_PUBLIC_SERVER_URL=
+
+EXPO_PUBLIC_FARE_BASE_MRU=100
+EXPO_PUBLIC_FARE_PER_KM_MRU=100
 ```
 
-Replace the placeholder values with your actual Clerk, Stripe, NeonDB, Google Maps, andgeoapify credentials. You can
-obtain these credentials by signing up on
-the [Clerk](https://clerk.com/), [Stripe](https://stripe.com/in), [NeonDB](https://neon.tech/), [Google Maps](https://console.cloud.google.com/)
+Replace the placeholder values with your actual Clerk, NeonDB, Google Maps, and
+geoapify credentials. You can obtain these credentials by signing up on
+the [Clerk](https://clerk.com/), [NeonDB](https://neon.tech/), [Google Maps](https://console.cloud.google.com/)
 and [geoapify](https://www.geoapify.com/) websites respectively.
+
+**Running the Database Migrations**
+
+The schema is versioned in `db/migrations/` and applied with the built-in runner:
+
+```bash
+DATABASE_URL=postgres://... node scripts/migrate.mjs up
+DATABASE_URL=postgres://... node scripts/migrate.mjs status
+```
+
+See the [Production Status](#production-status) section for what is stabilised in
+the current codebase.
 
 **Running the Project**
 
@@ -1745,3 +1810,7 @@ Enjoyed creating this project? Dive deeper into our PRO courses for a richer lea
 <a href="https://www.jsmastery.pro/ultimate-next-course" target="_blank">
 <img src="https://i.ibb.co/804sPK6/Image-720.png" alt="Project Banner">
 </a>
+# -my-taxi-app
+# -my-taxi-app
+
+

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "uber",
-    "slug": "uber",
+    "name": "Ryde",
+    "slug": "ryde",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "ryde",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -13,9 +13,11 @@
       "backgroundColor": "#2F80ED"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ryde.taxi"
     },
     "android": {
+      "package": "com.ryde.taxi",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -30,9 +32,10 @@
       [
         "expo-router",
         {
-          "origin": "https://uber.dev/"
+          "origin": "https://ryde.dev/"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

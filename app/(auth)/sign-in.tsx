@@ -7,6 +7,7 @@ import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
+import { t } from "@/lib/i18n";
 
 const SignIn = () => {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -31,11 +32,11 @@ const SignIn = () => {
       } else {
         // See https://clerk.com/docs/custom-flows/error-handling for more info on error handling
         console.log(JSON.stringify(signInAttempt, null, 2));
-        Alert.alert("Error", "Log in failed. Please try again.");
+        Alert.alert(t("common.error"), t("signin.error"));
       }
     } catch (err: any) {
       console.log(JSON.stringify(err, null, 2));
-      Alert.alert("Error", err.errors[0].longMessage);
+      Alert.alert(t("common.error"), err.errors[0].longMessage);
     }
   }, [isLoaded, form]);
 
@@ -45,14 +46,14 @@ const SignIn = () => {
         <View className="relative w-full h-[250px]">
           <Image source={images.signUpCar} className="z-0 w-full h-[250px]" />
           <Text className="text-2xl text-black font-JakartaSemiBold absolute bottom-5 left-5">
-            Welcome 👋
+            {t("signin.welcome")}
           </Text>
         </View>
 
         <View className="p-5">
           <InputField
-            label="Email"
-            placeholder="Enter email"
+            label={t("signin.email")}
+            placeholder={t("signin.emailPlaceholder")}
             icon={icons.email}
             textContentType="emailAddress"
             value={form.email}
@@ -60,8 +61,8 @@ const SignIn = () => {
           />
 
           <InputField
-            label="Password"
-            placeholder="Enter password"
+            label={t("signin.password")}
+            placeholder={t("signin.passwordPlaceholder")}
             icon={icons.lock}
             secureTextEntry={true}
             textContentType="password"
@@ -70,7 +71,7 @@ const SignIn = () => {
           />
 
           <CustomButton
-            title="Sign In"
+            title={t("signin.submit")}
             onPress={onSignInPress}
             className="mt-6"
           />
@@ -81,8 +82,8 @@ const SignIn = () => {
             href="/sign-up"
             className="text-lg text-center text-general-200 mt-10"
           >
-            Don't have an account?{" "}
-            <Text className="text-primary-500">Sign Up</Text>
+            {t("signin.noAccount")}{" "}
+            <Text className="text-primary-500">{t("signin.signUp")}</Text>
           </Link>
         </View>
       </View>

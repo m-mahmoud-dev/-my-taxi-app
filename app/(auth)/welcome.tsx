@@ -6,6 +6,7 @@ import Swiper from "react-native-swiper";
 
 import CustomButton from "@/components/CustomButton";
 import { onboarding } from "@/constants";
+import { t } from "@/lib/i18n";
 
 const Home = () => {
   const swiperRef = useRef<Swiper>(null);
@@ -21,7 +22,9 @@ const Home = () => {
         }}
         className="w-full flex justify-end items-end p-5"
       >
-        <Text className="text-black text-md font-JakartaBold">Skip</Text>
+        <Text className="text-black text-md font-JakartaBold">
+          {t("welcome.skip")}
+        </Text>
       </TouchableOpacity>
 
       <Swiper
@@ -35,7 +38,7 @@ const Home = () => {
         }
         onIndexChanged={(index) => setActiveIndex(index)}
       >
-        {onboarding.map((item) => (
+        {onboarding.map((item, index) => (
           <View key={item.id} className="flex items-center justify-center p-5">
             <Image
               source={item.image}
@@ -44,18 +47,18 @@ const Home = () => {
             />
             <View className="flex flex-row items-center justify-center w-full mt-10">
               <Text className="text-black text-3xl font-bold mx-10 text-center">
-                {item.title}
+                {t(`onboarding.slide${index + 1}.title`)}
               </Text>
             </View>
             <Text className="text-md font-JakartaSemiBold text-center text-[#858585] mx-10 mt-3">
-              {item.description}
+              {t(`onboarding.slide${index + 1}.desc`)}
             </Text>
           </View>
         ))}
       </Swiper>
 
       <CustomButton
-        title={isLastSlide ? "Get Started" : "Next"}
+        title={isLastSlide ? t("welcome.getStarted") : t("welcome.next")}
         onPress={() =>
           isLastSlide
             ? router.replace("/(auth)/sign-up")

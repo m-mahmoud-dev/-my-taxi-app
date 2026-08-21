@@ -1,20 +1,41 @@
 import { Ride } from "@/types/type";
 
-export const sortRides = (rides: Ride[]): Ride[] => {
-  const result = rides.sort((a, b) => {
-    const dateA = new Date(`${a.created_at}T${a.ride_time}`);
-    const dateB = new Date(`${b.created_at}T${b.ride_time}`);
-    return dateB.getTime() - dateA.getTime();
-  });
+const FARE_BASE_MRU = Number(process.env.EXPO_PUBLIC_FARE_BASE_MRU ?? 100);
+const FARE_PER_KM_MRU = Number(process.env.EXPO_PUBLIC_FARE_PER_KM_MRU ?? 100);
 
-  return result.reverse();
+/**
+ * Client-side fare preview, mirroring the server fare engine (fare_rules):
+ * base 100 MRU covers the first km, +100 MRU per additional started km.
+ * The server recomputes the authoritative fare at booking time.
+ */
+export function estimateFareMRU(
+  distanceKm: number,
+  _vehicleType = "standard",
+): number {
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return FARE_BASE_MRU;
+  const extraKms = Math.max(0, Math.ceil(distanceKm) - 1);
+  return Math.max(FARE_BASE_MRU, FARE_BASE_MRU + FARE_PER_KM_MRU * extraKms);
+}
+
+export function formatMRU(amount: number | string): string {
+  const value = typeof amount === "string" ? Number(amount) : amount;
+  if (!Number.isFinite(value)) return "0 MRU";
+  return `${Math.round(value)} MRU`;
+}
+
+export const sortRides = (rides: Ride[]): Ride[] => {
+  return [...rides].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return dateB - dateA;
+  });
 };
 
 export function formatTime(minutes: number): string {
   const formattedMinutes = +minutes?.toFixed(0) || 0;
 
   if (formattedMinutes < 60) {
-    return `${minutes} min`;
+    return `${formattedMinutes} min`;
   } else {
     const hours = Math.floor(formattedMinutes / 60);
     const remainingMinutes = formattedMinutes % 60;

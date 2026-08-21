@@ -2,7 +2,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { useAuth } from "@clerk/clerk-expo";
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   Text,
   View,
@@ -18,6 +18,7 @@ import Map from "@/components/Map";
 import RideCard from "@/components/RideCard";
 import { icons, images } from "@/constants";
 import { useFetch } from "@/lib/fetch";
+import { t } from "@/lib/i18n";
 import { useLocationStore } from "@/store";
 import { Ride } from "@/types/type";
 
@@ -32,36 +33,33 @@ const Home = () => {
     router.replace("/(auth)/sign-in");
   };
 
-  const [hasPermission, setHasPermission] = useState<boolean>(false);
-
-  const {
-    data: recentRides,
-    loading,
-    error,
-  } = useFetch<Ride[]>(`/(api)/ride/${user?.id}`);
+  const { data: recentRides, loading } = useFetch<Ride[]>(
+    `/(api)/ride/${user?.id}`,
+  );
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setHasPermission(false);
-        return;
-      }
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
 
-      let location = await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync({});
 
       const address = await Location.reverseGeocodeAsync({
         latitude: location.coords?.latitude!,
         longitude: location.coords?.longitude!,
       });
 
+      const addressLabel = address[0]
+        ? `${address[0].name}, ${address[0].region}`
+        : "Current location";
+
       setUserLocation({
         latitude: location.coords?.latitude,
         longitude: location.coords?.longitude,
-        address: `${address[0].name}, ${address[0].region}`,
+        address: addressLabel,
       });
     })();
-  }, []);
+  }, [setUserLocation]);
 
   const handleDestinationPress = (location: {
     latitude: number;
@@ -94,7 +92,7 @@ const Home = () => {
                   alt="No recent rides found"
                   resizeMode="contain"
                 />
-                <Text className="text-sm">No recent rides found</Text>
+                <Text className="text-sm">{t("home.noRides")}</Text>
               </>
             ) : (
               <ActivityIndicator size="small" color="#000" />
@@ -105,7 +103,7 @@ const Home = () => {
           <>
             <View className="flex flex-row items-center justify-between my-5">
               <Text className="text-2xl font-JakartaExtraBold">
-                Welcome {user?.firstName}👋
+                {t("home.greeting")} {user?.firstName}👋
               </Text>
               <TouchableOpacity
                 onPress={handleSignOut}
@@ -123,7 +121,7 @@ const Home = () => {
 
             <>
               <Text className="text-xl font-JakartaBold mt-5 mb-3">
-                Your current location
+                {t("findride.from")}
               </Text>
               <View className="flex flex-row items-center bg-transparent h-[300px]">
                 <Map />
@@ -131,7 +129,7 @@ const Home = () => {
             </>
 
             <Text className="text-xl font-JakartaBold mt-5 mb-3">
-              Recent Rides
+              {t("home.recentRides")}
             </Text>
           </>
         }

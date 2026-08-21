@@ -22,6 +22,7 @@ declare interface MarkerData {
   first_name: string;
   last_name: string;
   time?: number;
+  distance?: number;
   price?: string;
 }
 
@@ -34,6 +35,7 @@ declare interface MapProps {
 }
 
 declare interface Ride {
+  ride_id: number;
   origin_address: string;
   destination_address: string;
   origin_latitude: number;
@@ -41,11 +43,15 @@ declare interface Ride {
   destination_latitude: number;
   destination_longitude: number;
   ride_time: number;
+  distance_km: number;
   fare_price: number;
   payment_status: string;
+  payment_method?: string;
+  status?: string;
   driver_id: number;
   user_id: string;
   created_at: string;
+  updated_at?: string;
   driver: {
     first_name: string;
     last_name: string;
