@@ -1,9 +1,3 @@
-<div align="center">
-  <br />
-    <a href="https://youtu.be/kmy_YNhl0mw" target="_blank">
-      <img src="https://i.ibb.co/Bf04Hpd/Readme-thumbnail-from-JS-Mastery.png" alt="Project Banner">
-    </a>
-  <br />
 
   <div>
     <img src="https://img.shields.io/badge/-React_Native-black?style=for-the-badge&logoColor=white&logo=react&color=61DAFB" alt="reactnative" />
@@ -15,11 +9,6 @@
 
 <h3 align="center">Full Stack Uber Clone</h3>
 
-   <div align="center">
-     Build this project step by step with our detailed tutorial on <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a> YouTube. Join the JSM family!
-    </div>
-</div>
-
 ## 📋 <a name="table">Table of Contents</a>
 
 1. 🤖 [Introduction](#introduction)
@@ -30,11 +19,6 @@
 6. 🖇️ [Links](#links)
 7. 📦 [Assets](#assets)
 8. 🚀 [More](#more)
-
-## 🚨 Tutorial
-
-This repository contains the code corresponding to an in-depth tutorial available on our YouTube
-channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>.
 
 If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects
 like these step-by-step in a beginner-friendly manner!
